@@ -82,5 +82,27 @@ npm run health
 
 - Scores are deterministic and auditable; the LLM cannot change rankings.
 - STON.fi is the only market data source in this MVP.
-- `/buy` never executes trades or touches wallet keys. It opens STON.fi with the target token prefilled; the user reviews and confirms in their own wallet.
+- `/buy` never touches wallet keys. It opens the Telegram Mini App, which uses STON.fi quote/transaction building plus TON Connect wallet approval. A fallback STON.fi link is also shown.
 - This is not financial advice and should not be presented as automated portfolio management.
+
+## Telegram Mini App Swaps
+
+The in-Telegram swap flow needs a public HTTPS URL because TON Connect wallets must read `tonconnect-manifest.json`.
+
+Set these values in `.env` before using `/buy` in production:
+
+```bash
+MINI_APP_PUBLIC_URL="https://your-public-domain.example"
+MINI_APP_ICON_URL="https://your-public-domain.example/icon.png"
+TON_RPC_ENDPOINT="https://toncenter.com/api/v2/jsonRPC"
+TON_RPC_API_KEY=""
+```
+
+Run locally:
+
+```bash
+npm run dev:server
+npm run dev:miniapp
+```
+
+For Telegram testing, expose the server with an HTTPS tunnel and set `MINI_APP_PUBLIC_URL` to that HTTPS URL.

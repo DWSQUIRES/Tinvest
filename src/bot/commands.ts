@@ -168,13 +168,17 @@ export function registerCommands(bot: Bot): void {
     }
 
     const score = await scores.latestForAsset(asset.id);
-    const swapUrl = buildStonfiSwapLink({
+    const fallbackSwapUrl = buildStonfiSwapLink({
       baseUrl: env.STONFI_SWAP_BASE_URL,
       fromToken: "TON",
       targetToken: asset.id,
       fromAmount: amountTon
     });
-    const keyboard = new InlineKeyboard().url("Open STON.fi swap", swapUrl);
+    const miniAppUrl = buildMiniAppBuyUrl(asset.symbol, amountTon);
+    const keyboard = new InlineKeyboard()
+      .url("Open in Telegram", miniAppUrl)
+      .row()
+      .url("Fallback: STON.fi", fallbackSwapUrl);
 
     await ctx.reply(
       [
@@ -184,7 +188,7 @@ export function registerCommands(bot: Bot): void {
         `Token address: ${asset.id}`,
         "",
         "The bot does not execute this trade.",
-        "Open STON.fi, connect your wallet, verify the token address and amount, then approve or reject the transaction in your wallet.",
+        "Open the Mini App, connect your wallet, verify the token address and amount, then approve or reject the transaction in your wallet.",
         "",
         disclaimer
       ].join("\n"),
@@ -207,4 +211,14 @@ function isValidPositiveAmount(value: string): boolean {
   }
 
   return Number(value) > 0;
+}
+
+function buildMiniAppBuyUrl(symbolOrAddress: string, amountTon?: string): string {
+  const url = new URL("/", env.MINI_APP_PUBLIC_URL);
+  url.searchParams.set("token", symbolOrAddress);
+  if (amountTon) {
+    url.searchParams.set("amount", amountTon);
+  }
+
+  return url.toString();
 }

@@ -6,6 +6,7 @@ const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().optional().default(""),
   STONFI_API_BASE_URL: z.string().url().default("https://api.ston.fi"),
   STONFI_SWAP_BASE_URL: z.string().url().default("https://app.ston.fi/swap"),
+  STONFI_TON_ASSET_ADDRESS: z.string().default("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c"),
   STONFI_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
   STONFI_REQUEST_RETRIES: z.coerce.number().int().min(1).default(3),
   STONFI_MAX_POOLS: z.coerce.number().int().positive().default(1_000),
@@ -23,7 +24,14 @@ const envSchema = z.object({
   MIN_LIQUIDITY_USD: z.coerce.number().nonnegative().default(10_000),
   SCORE_ALERT_THRESHOLD: z.coerce.number().int().min(1).max(100).default(70),
   RISK_ALERT_THRESHOLD: z.coerce.number().int().min(1).max(100).default(65),
-  RANK_ALERT_TOP_N: z.coerce.number().int().positive().default(10)
+  RANK_ALERT_TOP_N: z.coerce.number().int().positive().default(10),
+  MINI_APP_PUBLIC_URL: z.string().url().default("https://example.com"),
+  MINI_APP_NAME: z.string().default("TON Economic Watchers"),
+  MINI_APP_ICON_URL: z.string().url().default("https://example.com/icon.png"),
+  TON_RPC_ENDPOINT: z.string().url().default("https://toncenter.com/api/v2/jsonRPC"),
+  TON_RPC_API_KEY: z.string().optional().default(""),
+  DEFAULT_SWAP_SLIPPAGE: z.string().default("0.01"),
+  SERVER_PORT: z.coerce.number().int().positive().default(3000)
 });
 
 export type Env = z.infer<typeof envSchema>;
