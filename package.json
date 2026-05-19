@@ -1,0 +1,48 @@
+{
+  "name": "ton-economic-watchers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telegram-native AI economic watcher MVP for TON assets using STON.fi data.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev:bot": "tsx watch src/bot/index.ts",
+    "dev:collector": "tsx watch src/jobs/collector.ts",
+    "dev:scorer": "tsx watch src/jobs/scorer.ts",
+    "dev:alerts": "tsx watch src/jobs/alerts.ts",
+    "run:collector": "tsx src/jobs/collector.ts --once",
+    "run:scorer": "tsx src/jobs/scorer.ts --once",
+    "run:alerts": "tsx src/jobs/alerts.ts --once",
+    "health": "tsx src/jobs/health.ts",
+    "start:bot": "node dist/bot/index.js",
+    "start:collector": "node dist/jobs/collector.js",
+    "start:scorer": "node dist/jobs/scorer.js",
+    "start:alerts": "node dist/jobs/alerts.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "dotenv": "^16.4.7",
+    "grammy": "^1.33.0",
+    "openai": "^4.77.0",
+    "pino": "^9.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "pino-pretty": "^13.0.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.6"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

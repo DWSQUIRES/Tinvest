@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: watcher
+      POSTGRES_PASSWORD: watcher
+      POSTGRES_DB: watchers
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watcher -d watchers"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  bot:
+    build: .
+    command: ["npm", "run", "start:bot"]
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://watcher:watcher@postgres:5432/watchers?schema=public"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  collector:
+    build: .
+    command: ["npm", "run", "start:collector"]
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://watcher:watcher@postgres:5432/watchers?schema=public"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  scorer:
+    build: .
+    command: ["npm", "run", "start:scorer"]
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://watcher:watcher@postgres:5432/watchers?schema=public"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  alerts:
+    build: .
+    command: ["npm", "run", "start:alerts"]
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://watcher:watcher@postgres:5432/watchers?schema=public"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  migrate:
+    build: .
+    command: ["npm", "run", "db:deploy"]
+    env_file: .env
+    environment:
+      DATABASE_URL: "postgresql://watcher:watcher@postgres:5432/watchers?schema=public"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

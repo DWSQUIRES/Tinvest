@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AlertType {
+  SCORE_ABOVE
+  RISK_ABOVE
+  RANK_TOP
+  LIQUIDITY_DROP
+  VOLUME_SPIKE
+}
+
+enum AlertStatus {
+  ACTIVE
+  PAUSED
+}
+
+model Asset {
+  id          String   @id
+  symbol      String
+  name        String?
+  decimals    Int?
+  imageUrl    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  basePools   Pool[]   @relation("BaseAsset")
+  quotePools  Pool[]   @relation("QuoteAsset")
+  scores      ScoreSnapshot[]
+  reports     GeneratedReport[]
+  watchlists  Watchlist[]
+
+  @@index([symbol])
+}
+
+model Pool {
+  id             String   @id
+  address        String?  @unique
+  baseAssetId    String
+  quoteAssetId   String?
+  lpFeeBps       Int?
+  protocolFeeBps Int?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  baseAsset      Asset    @relation("BaseAsset", fields: [baseAssetId], references: [id])
+  quoteAsset     Asset?   @relation("QuoteAsset", fields: [quoteAssetId], references: [id])
+  snapshots      PoolMetricSnapshot[]
+
+  @@index([baseAssetId])
+  @@index([quoteAssetId])
+}
+
+model PoolMetricSnapshot {
+  id            String   @id @default(cuid())
+  poolId        String
+  capturedAt    DateTime @default(now())
+  liquidityUsd  Decimal? @db.Decimal(30, 8)
+  volume24hUsd  Decimal? @db.Decimal(30, 8)
+  volume7dUsd   Decimal? @db.Decimal(30, 8)
+  priceUsd      Decimal? @db.Decimal(30, 12)
+  txCount24h    Int?
+  raw           Json
+
+  pool          Pool     @relation(fields: [poolId], references: [id], onDelete: Cascade)
+
+  @@index([poolId, capturedAt])
+  @@index([capturedAt])
+}
+
+model ScoreSnapshot {
+  id                  String   @id @default(cuid())
+  assetId             String
+  capturedAt           DateTime @default(now())
+  rank                Int?
+  opportunityScore    Int
+  riskScore           Int
+  liquidityScore      Int
+  activityScore       Int
+  marketHealthScore   Int
+  stabilityScore      Int
+  ecosystemScore      Int
+  reasons             Json
+  metrics             Json
+
+  asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  reports             GeneratedReport[]
+
+  @@index([assetId, capturedAt])
+  @@index([rank])
+  @@index([capturedAt])
+}
+
+model TelegramUser {
+  id              String    @id @default(cuid())
+  telegramId      BigInt    @unique
+  username        String?
+  firstName       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  watchlists      Watchlist[]
+  alertRules      AlertRule[]
+  sentAlerts      SentAlert[]
+}
+
+model Watchlist {
+  id        String       @id @default(cuid())
+  userId    String
+  assetId   String
+  createdAt DateTime     @default(now())
+
+  user      TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset     Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assetId])
+  @@index([assetId])
+}
+
+model AlertRule {
+  id        String       @id @default(cuid())
+  userId    String
+  type      AlertType
+  status    AlertStatus  @default(ACTIVE)
+  threshold Decimal?     @db.Decimal(30, 8)
+  assetId   String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user      TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([assetId])
+}
+
+model SentAlert {
+  id          String       @id @default(cuid())
+  userId      String
+  assetId     String
+  type        AlertType
+  fingerprint String
+  message     String
+  sentAt      DateTime     @default(now())
+
+  user        TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, fingerprint])
+  @@index([assetId, sentAt])
+}
+
+model GeneratedReport {
+  id              String        @id @default(cuid())
+  assetId         String
+  scoreSnapshotId String?
+  body            String
+  model           String?
+  createdAt       DateTime      @default(now())
+
+  asset           Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  scoreSnapshot   ScoreSnapshot? @relation(fields: [scoreSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([assetId, createdAt])
+}
+
+model JobRun {
+  id          String   @id @default(cuid())
+  name        String
+  status      String
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+  message     String?
+  metadata    Json?
+
+  @@index([name, startedAt])
+}
