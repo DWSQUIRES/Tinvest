@@ -109,3 +109,44 @@ dd {
 .status {
   color: #a33b16;
 }
+
+.aiPanel h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  color: #34495e;
+}
+
+ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+li {
+  margin: 5px 0;
+}
+
+.verdict {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #eef4ff;
+  color: #1f5fbf;
+  font-weight: 800;
+}
+
+.verdictHighrisk {
+  background: #fff1eb;
+  color: #a33b16;
+}
+
+.verdictFavorable {
+  background: #eaf8ef;
+  color: #1f7a3d;
+}
+
+.finePrint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #667085;
+}

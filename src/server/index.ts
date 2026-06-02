@@ -8,10 +8,12 @@ import { logger } from "../config/logger.js";
 import { prisma } from "../db/client.js";
 import { AssetRepository } from "../repositories/assets.js";
 import { ScoreRepository } from "../repositories/scores.js";
+import { AiSwapCheckService } from "../services/ai-swap-check.js";
 import { StonfiSwapService } from "../services/swap/stonfi-swap.js";
 
 const app = express();
 const swap = new StonfiSwapService(prisma);
+const aiSwapCheck = new AiSwapCheckService(prisma);
 const assets = new AssetRepository(prisma);
 const scores = new ScoreRepository(prisma);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -85,6 +87,15 @@ app.post("/api/swap/transaction", async (req, res) => {
       })
       .parse(req.body);
     res.json(await swap.transaction(input));
+  } catch (error) {
+    sendError(res, error);
+  }
+});
+
+app.post("/api/ai/swap-check", async (req, res) => {
+  try {
+    const input = quoteSchema.parse(req.body);
+    res.json(await aiSwapCheck.create(input));
   } catch (error) {
     sendError(res, error);
   }

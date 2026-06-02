@@ -26,14 +26,27 @@ type Quote = {
   };
 };
 
+type AiSwapCheck = {
+  verdict: "Favorable" | "Mixed" | "High risk" | "Insufficient data";
+  confidence: "Low" | "Medium" | "High";
+  summary: string;
+  positiveSignals: string[];
+  riskSignals: string[];
+  invalidationSignals: string[];
+  notAdvice: string;
+};
+
 export function App({ defaultSlippage }: AppProps) {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const [token, setToken] = useState(params.get("token") ?? params.get("symbol") ?? "STON");
   const [amountTon, setAmountTon] = useState(params.get("amount") ?? "1");
   const [slippageTolerance, setSlippageTolerance] = useState(params.get("slippage") ?? defaultSlippage);
   const [quote, setQuote] = useState<Quote | null>(null);
+  const [aiCheck, setAiCheck] = useState<AiSwapCheck | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const walletAddress = useTonAddress();
   const [tonConnectUi] = useTonConnectUI();
@@ -63,11 +76,35 @@ export function App({ defaultSlippage }: AppProps) {
         throw new Error(body.error ?? "Quote failed");
       }
       setQuote(body);
+      void refreshAiCheck();
     } catch (err) {
       setQuote(null);
+      setAiCheck(null);
       setError(err instanceof Error ? err.message : "Quote failed");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function refreshAiCheck() {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const response = await fetch("/api/ai/swap-check", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, amountTon, slippageTolerance })
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.error ?? "AI check failed");
+      }
+      setAiCheck(body.check);
+    } catch (err) {
+      setAiCheck(null);
+      setAiError(err instanceof Error ? err.message : "AI check unavailable");
+    } finally {
+      setAiLoading(false);
     }
   }
 
@@ -154,6 +191,27 @@ export function App({ defaultSlippage }: AppProps) {
             <dt>Watcher score</dt>
             <dd>{quote.score ? `${quote.score.opportunityScore}/100 risk ${quote.score.riskScore}/100` : "n/a"}</dd>
           </dl>
+        )}
+      </section>
+
+      <section className="quotePanel aiPanel">
+        <h2>AI Swap Check</h2>
+        {aiLoading && <p>Reviewing current quote and watcher metrics...</p>}
+        {aiError && <p className="status">{aiError}</p>}
+        {aiCheck && (
+          <div>
+            <p className={`verdict verdict${aiCheck.verdict.replace(/\s+/g, "")}`}>
+              {aiCheck.verdict} · {aiCheck.confidence} confidence
+            </p>
+            <p>{aiCheck.summary}</p>
+            <h3>Positive signals</h3>
+            <ul>{aiCheck.positiveSignals.map((item) => <li key={item}>{item}</li>)}</ul>
+            <h3>Risks</h3>
+            <ul>{aiCheck.riskSignals.map((item) => <li key={item}>{item}</li>)}</ul>
+            <h3>Invalidation signals</h3>
+            <ul>{aiCheck.invalidationSignals.map((item) => <li key={item}>{item}</li>)}</ul>
+            <p className="finePrint">{aiCheck.notAdvice}</p>
+          </div>
         )}
       </section>
     </main>

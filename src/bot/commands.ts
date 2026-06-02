@@ -4,6 +4,7 @@ import { prisma } from "../db/client.js";
 import { AssetRepository } from "../repositories/assets.js";
 import { ScoreRepository } from "../repositories/scores.js";
 import { UserRepository } from "../repositories/users.js";
+import { AiSwapCheckService } from "../services/ai-swap-check.js";
 import { ReportService } from "../services/reports.js";
 import { commandArgument, ensureUser } from "./context.js";
 import { disclaimer, formatReport, formatRules, formatScoreLine, formatWatchlistLine } from "./formatters.js";
@@ -12,6 +13,7 @@ const assets = new AssetRepository(prisma);
 const scores = new ScoreRepository(prisma);
 const users = new UserRepository(prisma);
 const reports = new ReportService(prisma);
+const aiSwapChecks = new AiSwapCheckService(prisma);
 
 export function registerCommands(bot: Bot): void {
   bot.command("start", async (ctx) => {
@@ -28,7 +30,8 @@ export function registerCommands(bot: Bot): void {
         "/unwatch <symbol or address> - remove an asset",
         "/watchlist - your watched assets",
         "/report <symbol or address> - explain latest score",
-        "/buy <symbol or address> [TON amount] - open a user-approved STON.fi swap",
+        "/swapcheck <symbol or address> <TON amount> - AI pre-swap risk check",
+        "/buy <symbol or address> [TON amount] - open a user-approved Mini App swap",
         "/alerts - show active alert rules",
         "",
         disclaimer
@@ -173,7 +176,7 @@ export function registerCommands(bot: Bot): void {
     await ctx.reply(
       [
         `Buy ${asset.symbol} with TON`,
-        amountTon ? `Prefilled amount: ${amountTon} TON` : "Amount: choose inside STON.fi",
+        amountTon ? `Prefilled amount: ${amountTon} TON` : "Amount: choose inside the Mini App",
         score ? `Watcher score: ${score.opportunityScore}/100 | Risk: ${score.riskScore}/100` : "Watcher score: not available yet",
         `Token address: ${asset.id}`,
         "",
@@ -186,6 +189,40 @@ export function registerCommands(bot: Bot): void {
         reply_markup: keyboard
       }
     );
+  });
+
+  bot.command("swapcheck", async (ctx) => {
+    await ensureUser(ctx);
+    const args = commandArgument(ctx).split(/\s+/).filter(Boolean);
+    const query = args[0];
+    const amountTon = args[1];
+
+    if (!query || !amountTon) {
+      await ctx.reply("Usage: /swapcheck <symbol or token address> <TON amount>\nExample: /swapcheck STON 0.1");
+      return;
+    }
+
+    if (!isValidPositiveAmount(amountTon)) {
+      await ctx.reply("Invalid TON amount. Example: /swapcheck STON 0.1");
+      return;
+    }
+
+    try {
+      const result = await aiSwapChecks.create({ token: query, amountTon });
+      await ctx.reply(
+        [
+          `AI swap check: ${result.quote.target.symbol}`,
+          `Spend: ${result.quote.offerAmount} TON`,
+          `Expected receive: ${result.quote.askAmount} ${result.quote.target.symbol}`,
+          `Minimum receive: ${result.quote.minAskAmount} ${result.quote.target.symbol}`,
+          `Price impact: ${Number(result.quote.priceImpact).toFixed(3)}%`,
+          "",
+          result.body
+        ].join("\n")
+      );
+    } catch (error) {
+      await ctx.reply(error instanceof Error ? error.message : "Could not generate swap check.");
+    }
   });
 
   bot.command("alerts", async (ctx) => {

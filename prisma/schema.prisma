@@ -34,6 +34,7 @@ model Asset {
   quotePools  Pool[]   @relation("QuoteAsset")
   scores      ScoreSnapshot[]
   reports     GeneratedReport[]
+  aiSwapChecks AiSwapCheck[]
   watchlists  Watchlist[]
 
   @@index([symbol])
@@ -92,6 +93,7 @@ model ScoreSnapshot {
 
   asset               Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
   reports             GeneratedReport[]
+  aiSwapChecks        AiSwapCheck[]
 
   @@index([assetId, capturedAt])
   @@index([rank])
@@ -167,6 +169,26 @@ model GeneratedReport {
   scoreSnapshot   ScoreSnapshot? @relation(fields: [scoreSnapshotId], references: [id], onDelete: SetNull)
 
   @@index([assetId, createdAt])
+}
+
+model AiSwapCheck {
+  id                  String        @id @default(cuid())
+  assetId             String
+  scoreSnapshotId     String?
+  amountTon           String
+  slippageTolerance   String
+  quote               Json
+  promptInput         Json
+  output              Json
+  body                String
+  model               String?
+  createdAt           DateTime      @default(now())
+
+  asset               Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  scoreSnapshot       ScoreSnapshot? @relation(fields: [scoreSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([assetId, createdAt])
+  @@index([scoreSnapshotId])
 }
 
 model JobRun {
