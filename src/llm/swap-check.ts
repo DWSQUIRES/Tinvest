@@ -44,7 +44,7 @@ export type AiSwapCheckInput = {
   };
 };
 
-const fallbackNotice = "This is an informational risk check using STON.fi/watcher data only, not financial advice.";
+const fallbackNotice = "This is an informational risk check using STON.fi quote data and local watcher scores only, not financial advice.";
 
 export class SwapCheckGenerator {
   private readonly client = createOpenAiClient();
