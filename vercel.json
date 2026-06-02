@@ -12,7 +12,7 @@
       "destination": "/api/tonconnect-manifest"
     },
     {
-      "source": "/((?!api/|assets/|favicon.ico).*)",
+      "source": "/((?!api/|assets/|icon.png|favicon.ico).*)",
       "destination": "/index.html"
     }
   ],
