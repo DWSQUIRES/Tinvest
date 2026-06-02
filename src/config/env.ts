@@ -4,6 +4,9 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   TELEGRAM_BOT_TOKEN: z.string().optional().default(""),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional().default(""),
+  ADMIN_SECRET: z.string().optional().default(""),
+  CRON_SECRET: z.string().optional().default(""),
   STONFI_API_BASE_URL: z.string().url().default("https://api.ston.fi"),
   STONFI_SWAP_BASE_URL: z.string().url().default("https://app.ston.fi/swap"),
   STONFI_TON_ASSET_ADDRESS: z.string().default("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c"),

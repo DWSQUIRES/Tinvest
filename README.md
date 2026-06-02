@@ -110,3 +110,60 @@ npm run dev:miniapp
 For Telegram testing, expose the server with an HTTPS tunnel and set `MINI_APP_PUBLIC_URL` to that HTTPS URL.
 
 The Mini App calls `/api/swap/quote`, `/api/ai/swap-check`, and `/api/swap/transaction` from the same server. The AI check is persisted in Postgres for later review.
+
+## Vercel Deployment
+
+Vercel runs this app as static Mini App assets plus serverless API routes. The Telegram bot uses webhooks on Vercel; do not run `npm run dev:bot` or long-polling in the deployed project.
+
+Required production services:
+
+- A public Postgres database reachable from Vercel.
+- The Telegram bot token.
+- A public Vercel domain for `MINI_APP_PUBLIC_URL`.
+
+Set these Vercel environment variables:
+
+```bash
+DATABASE_URL="postgresql://..."
+TELEGRAM_BOT_TOKEN="..."
+TELEGRAM_WEBHOOK_SECRET="generate-a-random-secret"
+ADMIN_SECRET="generate-a-random-secret"
+CRON_SECRET="generate-a-random-secret"
+MINI_APP_PUBLIC_URL="https://your-vercel-domain.vercel.app"
+MINI_APP_ICON_URL="https://your-vercel-domain.vercel.app/icon.png"
+OPENAI_API_KEY="..."
+OPENAI_BASE_URL="https://share-ai.ckbdev.com"
+OPENAI_MODEL="gpt-5.4"
+OPENAI_WIRE_API="responses"
+OPENAI_REASONING_EFFORT="medium"
+OPENAI_DISABLE_RESPONSE_STORAGE="true"
+TON_RPC_ENDPOINT="https://toncenter.com/api/v2/jsonRPC"
+TON_RPC_API_KEY=""
+```
+
+Deploy:
+
+```bash
+npm run db:deploy
+npm run vercel-build
+vercel deploy --prod
+```
+
+After the production URL is live, set `MINI_APP_PUBLIC_URL` to that exact HTTPS URL in Vercel, redeploy, then register Telegram:
+
+```bash
+curl -X POST "https://your-vercel-domain.vercel.app/api/telegram/setup" \
+  -H "Authorization: Bearer $ADMIN_SECRET"
+```
+
+One Vercel cron route is scheduled in `vercel.json`:
+
+- `/api/cron/run` - collector, scorer, then alerts.
+
+Manual cron routes are also available for targeted runs:
+
+- `/api/cron/collector`
+- `/api/cron/scorer`
+- `/api/cron/alerts`
+
+All cron routes require `Authorization: Bearer $CRON_SECRET` when called manually. Vercel Cron also sends that bearer token automatically when `CRON_SECRET` is configured.

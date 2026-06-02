@@ -1,15 +1,9 @@
-import { Bot } from "grammy";
 import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { closeDatabase } from "../db/client.js";
-import { registerCommands } from "./commands.js";
+import { createBot } from "./bot.js";
 
-if (!env.TELEGRAM_BOT_TOKEN) {
-  throw new Error("TELEGRAM_BOT_TOKEN is required for the bot");
-}
-
-const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
-registerCommands(bot);
+const bot = createBot();
 
 try {
   await bot.api.setChatMenuButton({

@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json && vite build --config miniapp/vite.config.ts",
+    "vercel-build": "prisma generate && vite build --config miniapp/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -27,6 +28,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "telegram:setup": "tsx scripts/setup-telegram.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -50,6 +52,7 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vercel/node": "^5.8.9",
     "pino-pretty": "^13.0.0",
     "prisma": "^5.22.0",
     "tsx": "^4.19.2",
